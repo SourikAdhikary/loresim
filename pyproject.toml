@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loresim"
 version = "0.1.0"
-description = "LoreSim: Hybrid Rust + Python Epistemic World, Narrative Continuity Compiler, and Zero-Cost 60 FPS 2D NPC Theater Engine"
+description = "Simulate living worlds and NPCs that only know what they've actually seen or heard—catch plot holes, track secrets and lies, and watch characters act out scenes live."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }

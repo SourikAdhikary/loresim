@@ -1,32 +1,39 @@
-# 🎭 LoreSim: Epistemic World, Narrative Continuity & 60 FPS 2D NPC Theater Engine
+# 🎭 LoreSim — Living Worlds & NPCs That Only Know What They’ve Seen or Heard
 
-**`LoreSim`** is a hybrid **Rust (`crates/loresim-core`) + Python (`src/loresim`)** engine that brings **Dynamic Epistemic Logic ($\text{KD45}_n$)**, **Bi-Temporal World State**, **7-Rule Plot-Hole Compilation**, **Butterfly-Effect Causal Blast-Radius Tracing**, and a **Zero-Cost 60 FPS 2D NPC Stage Studio** to interactive narratives, living game NPCs, novels, and Tabletop RPG campaigns.
+**Simulate stories, games, and RPG worlds where characters have their own private memories, secrets, and lies—catch plot holes automatically and watch NPCs act out scenes live on a 2D stage.**
 
 ---
 
 ## Why `LoreSim` Exists
 
-Existing tools for stories, game NPCs, and multi-agent worlds fail in three ways:
-1. **Static Wikis (`WorldAnvil`, `Campfire`, `Notion`):** Dead text forms with zero state machine, zero plot-hole detection, and zero ability to watch characters interact.
-2. **Naive LLM Chat / Vector RAG (`ChatGPT`, `Sudowrite`, Standard Vector DBs):** Suffer from the **"Omniscient Hive-Mind Leak"**—if Character A hides a dagger in Chapter 2, Character B (300 miles away) magically acts suspicious of the dagger in Chapter 10 because all facts sit in one shared vector index.
-3. **Academic Agent Loops (Stanford `Smallville`):** Burn `$30–$50/hr` in tokens by using LLM reflection calls for basic spatial/witness physics and cannot distinguish objective truth from lies or secrets.
+When you build a story, a game with AI NPCs, or a D&D campaign, existing tools break as soon as things get complex:
+1. **Static Wikis (`WorldAnvil`, `Notion`):** You have to update everything by hand, they can't catch plot holes, and characters are just dead text pages.
+2. **Standard AI Chat (`ChatGPT`, `Claude`, Vector RAG):** Every character shares one giant brain. If Character A hides a dagger in Chapter 2 while Character B is 300 miles away, Character B magically knows about the dagger in Chapter 10.
+3. **Slow Agent Sims (`Smallville`):** Cost $40+ an hour in API calls just to move characters around a map and still can't tell the difference between a secret, a rumor, and a lie.
 
-`LoreSim` solves this by strictly separating **Objective Canonical Reality ($\mathcal{W}_t$)** from **Subjective Per-Character Epistemic Vaults ($\mathcal{B}_a(t)$)** inside a single-file bi-temporal SQLite WAL database accelerated by a native **Rust kernel (`libloresim_core`)**.
+**`LoreSim` fixes this.** It tracks **what actually happened in the world** separately from **what each character personally saw, heard, or was lied to about**—powered by a fast Rust + SQLite engine and a built-in 2D stage where you can watch your characters act out every scene.
 
 ---
 
-## 5 Killer Capabilities
+## What You Can Do With `LoreSim`
 
-1. **🎭 Zero-Cost 60 FPS 2D NPC Theater (`loresim studio`):**
-   Watch procedural 2D NPC puppets walk across rooms, huddle inside expanding **acoustic earshot rings**, pass items along **parabolic trajectories**, sweat when lying (`😰💧`), and react with **`😱❗`** shock badges when caught in a contradiction—rendered at 60 FPS in HTML5 Canvas at **`$0.00` image/video API cost**, with built-in multi-voice speech synthesis.
-2. **🛡️ Zero-Leak Epistemic Prompt Firewall (`EpistemicPromptFirewall`):**
-   Compiles each NPC's prompt strictly from their private $\mathcal{B}_a(b, t)$ vault (`FIRSTHAND`, `HEARSAY`, `EAVESDROP`, `DECEIVED`, `WITHHOLDS_SECRET`), guaranteeing **`0.0%` omniscient secret leakage**.
-3. **🔍 7-Rule Continuity & Plot-Hole Compiler (`loresim lint`):**
-   Detects **Epistemic Secret Leaks (`LINT-01`)**, **Spatial Teleportation (`LINT-02`)**, **Linear Inventory Violations (`LINT-03`)**, **Dead-Actor Actions (`LINT-04`)**, **Immutable Attribute Contradictions (`LINT-05`)**, **Dangling Chekhov Threads (`LINT-06`)**, and **Firsthand Lie Exposures (`LINT-07`)** in `<6 ms`.
-4. **🦋 "Butterfly Effect" Causal Blast-Radius Tracer (`loresim butterfly`):**
-   Disable or mutate any historical event in Chapter 1 and trace every downstream scene and belief across the story that becomes causally or epistemically impossible in **`<0.3 ms`**.
-5. **🕵️ Live Detective Interrogation & Rumor Contagion Map (`loresim interrogate`):**
-   Cross-examine any NPC at any tick $t$; presenting firsthand evidence that contradicts their cover story collapses their **Composure Meter** until they confess.
+1. **🎭 Watch NPCs Act Out Scenes Live (`loresim studio`):**
+   Open a 60 FPS 2D stage in your browser where characters walk between rooms, lean in to whisper secrets, pass items to each other, sweat when lying (`😰💧`), and react with shock (`😱❗`) when caught in a lie—at **$0 image/video API cost**.
+2. **🤫 Keep Secrets & Lies Strictly Separate:**
+   Each character only knows what they witnessed firsthand or were told by someone else. If someone lies to them, they genuinely believe and repeat the lie until proven otherwise.
+3. **🔍 Catch Plot Holes Automatically (`loresim lint`):**
+   Scans your chapters, scripts, or campaign notes in milliseconds to catch **7 types of story bugs**:
+   * A character mentioning a secret nobody told them yet
+   * Traveling between two cities faster than physically possible
+   * Using an item someone else is currently holding
+   * A dead character speaking or acting later in the timeline
+   * Contradicting a character's established traits (like eye color or background)
+   * Forgotten plot threads ("Chekhov's guns") introduced early and never resolved
+   * A character lying to someone who witnessed the truth firsthand
+4. **🦋 Test the "Butterfly Effect" (`loresim butterfly`):**
+   Change or delete one event in Chapter 1 (*"What if Vance never burned the treaty?"*) and immediately see every future scene across the story that breaks as a result.
+5. **🕵️ Interrogate Any Character (`loresim interrogate`):**
+   Step into the story at any point on the timeline and question any character. Present evidence that contradicts a suspect's alibi to watch their composure crack until they confess.
 
 ---
 
