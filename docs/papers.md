@@ -1,0 +1,12 @@
+# Foundational Research Papers & Theoretical Grounding in LoreSim
+
+`LoreSim` bridges **Dynamic Epistemic Logic ($\text{KD45}_n$)**, **Multi-Agent World Simulation**, **Bi-Temporal Knowledge Graphs**, and **Partial-Order Causal Link (POCL) Narrative Planning**.
+
+| Subsystem | Foundational Paper / Monograph | Direct Link | Architectural Implementation in `LoreSim` |
+| :--- | :--- | :--- | :--- |
+| **Multi-Agent World Simulation** | *Generative Agents: Interactive Simulacra of Human Behavior* (Park et al., Stanford / UIST 2023) | [arXiv:2304.03442](https://arxiv.org/abs/2304.03442) | `world/spatial.py`, `simulator/stage_director.py` (Replaces slow LLM spatial/witness loops with `<0.1ms` Rust/SQLite checks + 60 FPS 2D stage choreography) |
+| **Epistemic Modal Logic ($\text{KD45}_n$)** | *Reasoning About Knowledge* (Fagin, Halpern, Moses, Vardi, MIT Press) | [MIT Press Monograph](https://mitpress.mit.edu/9780262562003/reasoning-about-knowledge/) | `crates/loresim-core/src/epistemic.rs`, `epistemic/vault.py` (Separates canonical truth $\mathcal{W}_t$ from per-agent belief $\mathcal{B}_a(t)$, enabling false beliefs & deception) |
+| **Dynamic Epistemic Logic (DEL)** | *The Logic of Public Announcements, Common Knowledge, and Private Suspicions* (Baltag, Moss, Solecki, 1998) | [Stanford Encyclopedia: DEL](https://plato.stanford.edu/entries/dynamic-epistemic/) | `epistemic/propagator.py` (Formal action models for `WITNESS`, `TELL`, `LIE`, `EAVESDROP`, and automatic firsthand contradiction lie-exposure) |
+| **Bi-Temporal Knowledge Graphs** | *Zep / Graphiti: Temporal Knowledge Graph Architecture for Agent Memory* (Rasmussen et al., 2025) | [arXiv:2501.13956](https://arxiv.org/abs/2501.13956) | `storage/schema.py`, `epistemic/vault.py` (Bi-temporal `(branch_id, tick)` isolation preventing future-tick or cross-branch memory contamination) |
+| **Causal Link Narrative Planning** | *Narrative Planning: Balancing Plot and Character* (Riedl & Young, *JAIR* 2010) | [arXiv:1401.3891](https://arxiv.org/abs/1401.3891) | `crates/loresim-core/src/butterfly.rs`, `compiler/butterfly.py`, `compiler/threads.py` (Causal precondition blast-radius tracer & Chekhov's Gun thread tracker) |
+| **Theory-of-Mind Context Partitioning** | *FanToM: A Benchmark for Stress-Testing Machine Theory of Mind in Interactions* (Kim et al., EMNLP 2023) | [arXiv:2310.15421](https://arxiv.org/abs/2310.15421) | `epistemic/firewall.py` (Zero-leak symbolic prompt compiler & post-generation token auditor) |

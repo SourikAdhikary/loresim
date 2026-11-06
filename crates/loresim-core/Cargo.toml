@@ -1,0 +1,13 @@
+[package]
+name = "loresim-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "LoreSim Rust Deterministic Kernel: Epistemic KD45_n Logic, Dijkstra/A* Spatial Solver, Butterfly Blast-Radius Tracer, and 60 FPS Stage Physics"
+
+[lib]
+name = "loresim_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]

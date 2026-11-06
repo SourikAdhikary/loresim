@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build & Test Rust Core
+        run: |
+          cargo build --release
+          cargo test --release
+      - name: Install Python Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest ruff
+          pip install -e .
+      - name: Lint & Run Test Suite
+        run: |
+          ruff check src benchmarks tests
+          pytest tests/
+      - name: Verify 12 Kernel Invariants
+        run: |
+          python -m loresim.interfaces.cli doctor

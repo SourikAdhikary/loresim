@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoreSim Studio — 60 FPS 2D NPC Epistemic Theater & Contagion Map</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #131822;
+      --border: #232c3d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --truth: #38bdf8;
+      --lie: #f43f5e;
+      --deceiver: #f59e0b;
+      --unaware: #64748b;
+      --accent: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Inter", monospace; }
+    body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+    }
+    .brand { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .badge { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid var(--accent); padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+    .controls { display: flex; align-items: center; gap: 12px; }
+    button {
+      background: #1f2737; color: var(--text); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    button:hover { border-color: var(--accent); background: #283246; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    main { display: grid; grid-template-columns: 1fr 390px; flex: 1; overflow: hidden; }
+    .stage-wrap { display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow: hidden; }
+    canvas {
+      width: 100%; flex: 1; background: #0e131d;
+      border: 1px solid var(--border); border-radius: 10px;
+    }
+    .timeline-bar {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--panel); border: 1px solid var(--border);
+      padding: 10px 16px; border-radius: 8px;
+    }
+    input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .sidebar {
+      background: var(--panel); border-left: 1px solid var(--border);
+      padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+    }
+    .card {
+      background: #0f141d; border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .legend { display: flex; gap: 12px; font-size: 11px; flex-wrap: wrap; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .mono { font-size: 12px; line-height: 1.45; color: #cbd5e1; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>🎭 LoreSim Studio</span>
+      <span class="badge">Rust KD45_n Kernel + 60 FPS 2D NPC Theater ($0 Cost)</span>
+    </div>
+    <div class="controls">
+      <button id="btnPlay" class="primary">▶ Enact Timeline</button>
+      <button id="btnGod">👁️ God-Mode Subtext: ON</button>
+      <button id="btnVoice">🔊 NPC Voices: ON</button>
+      <button id="btnButterfly">🦋 Butterfly Blast Radius (ev_01)</button>
+    </div>
+  </header>
+  <main>
+    <div class="stage-wrap">
+      <div class="legend">
+        <span><i class="dot" style="background:var(--truth)"></i>Firsthand Truth (BLUE)</span>
+        <span><i class="dot" style="background:var(--lie)"></i>Believes Lie (RED)</span>
+        <span><i class="dot" style="background:var(--deceiver)"></i>Active Deceiver / Hiding Secret (GOLD)</span>
+        <span><i class="dot" style="background:var(--unaware)"></i>Unaware (GREY)</span>
+      </div>
+      <canvas id="stageCanvas" width="760" height="520"></canvas>
+      <div class="timeline-bar">
+        <span id="tickLabel" style="font-weight:700; min-width:110px;">Tick 1 (Day 1)</span>
+        <input id="tickSlider" type="range" min="1" max="5" step="1" value="1" />
+        <span id="ironyBadge" class="badge">Dramatic Irony: 0.00</span>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="card">
+        <h3>Current Beat & Stage Choreography</h3>
+        <div id="headlineBox" class="mono">Loading world state...</div>
+      </div>
+      <div class="card">
+        <h3>Selected NPC Epistemic Vault B_a(t)</h3>
+        <div id="vaultBox" class="mono">Click any NPC puppet on stage to inspect their private EpistemicVault or interrogate them.</div>
+      </div>
+      <div class="card">
+        <h3>🕵️ Live Detective Interrogation</h3>
+        <button id="btnInterrogate">Confront Lord Vance With Kael's Firsthand Evidence</button>
+        <div id="interrogateBox" class="mono">Ready for cross-examination.</div>
+      </div>
+      <div class="card">
+        <h3>🦋 Butterfly-Effect & Continuity Compiler</h3>
+        <div id="compilerBox" class="mono">Click "Butterfly Blast Radius" to disable Tick 1 and trace broken future scenes.</div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const canvas = document.getElementById('stageCanvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('tickSlider');
+    let currentFrame = null;
+    let godMode = true;
+    let voiceOn = true;
+    let animPhase = 0;
+
+    const ROOMS = [
+      { id: 'study', name: 'Royal Study', x: 40, y: 35, w: 310, h: 210 },
+      { id: 'great_hall', name: 'Great Banquet Hall', x: 390, y: 35, w: 330, h: 210 },
+      { id: 'courtyard', name: 'Citadel Courtyard', x: 40, y: 280, w: 310, h: 205 },
+      { id: 'tavern', name: 'Harbor Tavern', x: 390, y: 280, w: 330, h: 205 }
+    ];
+
+    const COLORS = {
+      BLUE_TRUTH: '#38bdf8',
+      RED_LIE: '#f43f5e',
+      GOLD_DECEIVER: '#f59e0b',
+      GREY_UNAWARE: '#64748b'
+    };
+
+    async function loadFrame(tick) {
+      const res = await fetch(`/api/frame?tick=${tick}`);
+      currentFrame = await res.json();
+      document.getElementById('tickLabel').textContent = `Tick ${currentFrame.tick} (${currentFrame.story_time})`;
+      document.getElementById('ironyBadge').textContent = `Dramatic Irony: ${currentFrame.dramatic_irony_score.toFixed(2)}`;
+      document.getElementById('headlineBox').textContent = `[${currentFrame.event_id}] ${currentFrame.headline}`;
+      if (voiceOn && window.speechSynthesis) {
+        const speaker = currentFrame.puppets.find(p => p.public_speech);
+        if (speaker) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(speaker.public_speech);
+          u.pitch = speaker.voice_pitch || 1.0;
+          u.rate = speaker.voice_rate || 1.0;
+          window.speechSynthesis.speak(u);
+        }
+      }
+    }
+
+    function drawStage() {
+      animPhase += 0.08;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw rooms
+      for (const r of ROOMS) {
+        ctx.strokeStyle = '#263147';
+        ctx.fillStyle = '#111723';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(r.x, r.y, r.w, r.h, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(r.name.toUpperCase(), r.x + 14, r.y + 22);
+      }
+
+      if (!currentFrame) {
+        requestAnimationFrame(drawStage);
+        return;
+      }
+
+      // Draw acoustic earshot rings
+      for (const ring of currentFrame.earshot_rings || []) {
+        const pulse = 1.0 + 0.06 * Math.sin(animPhase * 2.0);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, ring.radius_px * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = ring.ring_type === 'LIE_CRIMSON' ? 'rgba(244,63,94,0.65)' : 'rgba(56,189,248,0.55)';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw parabolic item transfer arcs
+      for (const arc of currentFrame.item_arcs || []) {
+        const pts = arc.arc_points || [];
+        if (pts.length > 1) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (const pt of pts) ctx.lineTo(pt[0], pt[1]);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          const idx = Math.floor(( (Math.sin(animPhase) + 1) / 2 ) * (pts.length - 1));
+          ctx.font = '18px sans-serif';
+          ctx.fillText(arc.icon, pts[idx][0] - 8, pts[idx][1] - 6);
+          ctx.restore();
+        }
+      }
+
+      // Draw NPC puppets
+      for (const p of currentFrame.puppets || []) {
+        const isSpeaking = Boolean(p.public_speech);
+        const bounce = isSpeaking ? Math.abs(Math.sin(animPhase * 3.2)) * 7 : Math.sin(animPhase + p.x) * 1.5;
+        const py = p.y - bounce;
+        const color = COLORS[p.contagion_color] || '#64748b';
+
+        // Contagion aura
+        ctx.beginPath();
+        ctx.arc(p.x, py, 24, 0, Math.PI * 2);
+        ctx.fillStyle = color + '33';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        // Puppet body
+        ctx.beginPath();
+        ctx.arc(p.x, py, 15, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        // Expression badge
+        let badge = '😐';
+        if (p.expression === 'LYING_SWEAT') badge = '😰💧';
+        else if (p.expression === 'SHOCK') badge = '😱❗';
+        else if (p.expression === 'SCHEMING') badge = '😈';
+        else if (p.expression === 'SUSPICIOUS') badge = '🤨';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(badge, p.x - 10, py + 5);
+
+        // Name & items
+        ctx.fillStyle = '#e6edf3';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(p.name, p.x - 28, py + 36);
+        if (p.held_items && p.held_items.length) {
+          ctx.font = '10px sans-serif';
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText(p.held_items.join(' '), p.x - 28, py + 48);
+        }
+
+        // Speech bubble
+        if (p.public_speech) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(p.x - 110, py - 74, 230, godMode ? 44 : 26, 6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = '10px sans-serif';
+          ctx.fillText('💬 ' + p.public_speech.slice(0, 38) + '...', p.x - 104, py - 58);
+          if (godMode && p.god_mode_thought) {
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText(p.god_mode_thought.slice(0, 40), p.x - 104, py - 40);
+          }
+        }
+      }
+
+      requestAnimationFrame(drawStage);
+    }
+
+    canvas.addEventListener('click', async (e) => {
+      if (!currentFrame) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+      for (const p of currentFrame.puppets) {
+        if (Math.hypot(mx - p.x, my - p.y) <= 28) {
+          const res = await fetch(`/api/epistemic?agent_id=${p.agent_id}&tick=${currentFrame.tick}`);
+          const data = await res.json();
+          document.getElementById('vaultBox').textContent = data.prompt_text;
+          break;
+        }
+      }
+    });
+
+    slider.addEventListener('input', (e) => loadFrame(e.target.value));
+    document.getElementById('btnGod').addEventListener('click', (e) => {
+      godMode = !godMode;
+      e.target.textContent = `👁️ God-Mode Subtext: ${godMode ? 'ON' : 'OFF'}`;
+    });
+    document.getElementById('btnVoice').addEventListener('click', (e) => {
+      voiceOn = !voiceOn;
+      e.target.textContent = `🔊 NPC Voices: ${voiceOn ? 'ON' : 'OFF'}`;
+    });
+    document.getElementById('btnPlay').addEventListener('click', async () => {
+      for (let t = 1; t <= 5; t++) {
+        slider.value = t;
+        await loadFrame(t);
+        await new Promise(r => setTimeout(r, 1600));
+      }
+    });
+    document.getElementById('btnInterrogate').addEventListener('click', async () => {
+      const res = await fetch('/api/interrogate?suspect_id=vance');
+      const data = await res.json();
+      document.getElementById('interrogateBox').textContent =
+        `${data.statement}\nComposure: ${data.initial_composure} -> ${data.final_composure} (${data.status})`;
+    });
+    document.getElementById('btnButterfly').addEventListener('click', async () => {
+      const res = await fetch('/api/butterfly?event_id=ev_01_burn_treaty');
+      const data = await res.json();
+      const lines = data.blast_radius.map(b => `• [Tick ${b.tick}] ${b.broken_event_id}: ${b.broken_reason}`);
+      document.getElementById('compilerBox').textContent =
+        `Disabled ev_01_burn_treaty -> ${lines.length} downstream events broken:\n` + lines.join('\n');
+    });
+
+    loadFrame(1);
+    requestAnimationFrame(drawStage);
+  </script>
+</body>
+</html>

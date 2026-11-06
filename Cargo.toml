@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/loresim-core"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["Sourik Adhikary"]
+repository = "https://github.com/SourikAdhikary/loresim"
