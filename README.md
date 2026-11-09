@@ -18,8 +18,8 @@ When you build a story, a game with AI NPCs, or a D&D campaign, existing tools b
 ## What You Can Do With `LoreSim`
 
 1. **🎭 Watch NPCs Act Out Scenes Live (`loresim studio`):**
-   Open a 60 FPS 2D stage in your browser where characters walk between rooms, lean in to whisper secrets, pass items to each other, sweat when lying (`😰💧`), and react with shock (`😱❗`) when caught in a lie—at **$0 image/video API cost**.
-2. **🤫 Keep Secrets & Lies Strictly Separate:**
+   Open a 60 FPS 2D stage in your browser where characters walk between rooms, lean in to whisper secrets, pass items to each other, sweat when lying, and react with shock when caught in a lie—at **$0 image/video API cost**.
+2. ** Keep Secrets & Lies Strictly Separate:**
    Each character only knows what they witnessed firsthand or were told by someone else. If someone lies to them, they genuinely believe and repeat the lie until proven otherwise.
 3. **🔍 Catch Plot Holes Automatically (`loresim lint`):**
    Scans your chapters, scripts, or campaign notes in milliseconds to catch **7 types of story bugs**:
@@ -30,9 +30,9 @@ When you build a story, a game with AI NPCs, or a D&D campaign, existing tools b
    * Contradicting a character's established traits (like eye color or background)
    * Forgotten plot threads ("Chekhov's guns") introduced early and never resolved
    * A character lying to someone who witnessed the truth firsthand
-4. **🦋 Test the "Butterfly Effect" (`loresim butterfly`):**
+4. ** Test the "Butterfly Effect" (`loresim butterfly`):**
    Change or delete one event in Chapter 1 (*"What if Vance never burned the treaty?"*) and immediately see every future scene across the story that breaks as a result.
-5. **🕵️ Interrogate Any Character (`loresim interrogate`):**
+5. ** Interrogate Any Character (`loresim interrogate`):**
    Step into the story at any point on the timeline and question any character. Present evidence that contradicts a suspect's alibi to watch their composure crack until they confess.
 
 ---
