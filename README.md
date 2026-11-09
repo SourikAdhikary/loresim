@@ -39,16 +39,17 @@ When you build a story, a game with AI NPCs, or a D&D campaign, existing tools b
 
 ## Reproducible A/B Benchmarks (`Without LoreSim` vs. `With LoreSim`)
 
-Run `make bench` to reproduce all 9 benchmarks (`B1`–`B5` + `S1`–`S4` in [`BENCHMARKS.md`](BENCHMARKS.md)):
+Run `make bench` to reproduce all 10 benchmarks (`B1`–`B6` + `S1`–`S4` in [`BENCHMARKS.md`](BENCHMARKS.md)):
 
 | Suite | Metric | Without LoreSim (Baseline) | With LoreSim (`Rust + Python`) | Measured Improvement |
 | :--- | :--- | :--- | :--- | :--- |
 | **`B1`** | 60-Turn Omniscient Secret Leak Rate | `100.0%` (Flat RAG) | **`0.0%`** (`EpistemicPromptFirewall`) | **`-100.0%` secret leakage** |
 | **`B1`** | False-Belief Roleplay Fidelity & Tokens | `0.0%` (`5,750` tok) | **`100.0%`** (`3,186` tok) | **`-44.6%` prompt tokens** |
-| **`B2`** | 30-Chapter Plot-Hole Recall (`35` bugs, `LINT-01..07`) | `14.3%` (Surface check) | **`100.0%`** (`5.68 ms` total) | **`+85.7%` plot-hole recall** |
+| **`B2`** | 30-Chapter Plot-Hole Recall (`35` bugs, `LINT-01..07`) | `14.3%` (Surface check) | **`100.0%`** (`3.83 ms` total) | **`+85.7%` plot-hole recall** |
 | **`B3`** | 16-Agent Rumor/Lie Contagion & Lie Exposure | `25.0%` / `0.0%` | **`100.0%` / `100.0%`** | **`100%` exact contagion & lie detection** |
-| **`B4`** | 100-Tick Living World + 60 FPS 2D Stage Latency | `850.0 ms/tick` (`Smallville`-style) | **`2.394 ms/tick`** (`$0.00` visual cost) | **`355.1x` faster / `-99.7%` tokens** |
-| **`B5`** | Butterfly-Effect Blast Radius & 30-Branch Forking | `0.0%` automated | **`100.0%`** in **`0.221 ms`** (`0.182 ms` fork) | **`0.0%` cross-branch contamination** |
+| **`B4`** | 100-Tick Living World + 60 FPS 2D Stage Latency | `850.0 ms/tick` (`Smallville`-style) | **`2.365 ms/tick`** (`$0.00` visual cost) | **`359.4x` faster / `-99.7%` tokens** |
+| **`B5`** | Butterfly-Effect Blast Radius & 30-Branch Forking | `0.0%` automated | **`100.0%`** in **`0.212 ms`** (`0.179 ms` fork) | **`0.0%` cross-branch contamination** |
+| **`B6`** | Live 60 FPS Studio UI Run (`5` Ticks, `25` Mind X-Rays, Interrogate + Butterfly) | `~12,000 ms/frame` (`~$0.40/scene` gen-video) | **`0.751 ms/frame`** (`$0.00` Canvas + WebSpeech) | **`22.2x` faster than 60 FPS budget** |
 
 ---
 
