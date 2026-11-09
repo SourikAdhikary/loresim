@@ -31,6 +31,15 @@ def test_all_ab_benchmark_gates() -> None:
     assert suites["B5"]["blast_radius_recall_pct"] == 100.0
     assert suites["B5"]["cross_branch_contamination_pct"] == 0.0
 
+    # B6: Live 60 FPS Studio UI Theater end-to-end verification
+    assert suites["B6"]["ui_controls_verified"] is True
+    assert suites["B6"]["timeline_ticks_enacted"] == 5
+    assert suites["B6"]["puppets_rendered"] == 25
+    assert suites["B6"]["mind_xray_inspector_calls"] == 25
+    assert suites["B6"]["interrogation_cracked"] is True
+    assert suites["B6"]["butterfly_broken_events_rendered"] >= 3
+    assert suites["B6"]["with_loresim_frame_ms"] < 16.67
+
     # S1..S4 Narrative Traps
     for trap in results["traps"]:
         assert trap["passed"] is True, f"Trap failed: {trap}"

@@ -12,6 +12,7 @@ from benchmarks.suites.b2_continuity_plot_hole_linter import run_b2_continuity_p
 from benchmarks.suites.b3_rumor_and_deception_network import run_b3_rumor_and_deception_network
 from benchmarks.suites.b4_living_world_tick_efficiency import run_b4_living_world_tick_efficiency
 from benchmarks.suites.b5_butterfly_blast_radius import run_b5_butterfly_blast_radius
+from benchmarks.suites.b6_studio_ui_theater import run_b6_studio_ui_theater
 from benchmarks.traps.story_traps import run_all_story_traps
 
 from loresim.core.rust_bridge import is_rust_kernel_loaded, rust_kernel_version
@@ -23,6 +24,7 @@ def run_all_benchmarks(write_markdown: bool = True) -> dict[str, Any]:
     b3 = run_b3_rumor_and_deception_network()
     b4 = run_b4_living_world_tick_efficiency()
     b5 = run_b5_butterfly_blast_radius()
+    b6 = run_b6_studio_ui_theater()
     traps = run_all_story_traps()
 
     summary = {
@@ -32,7 +34,7 @@ def run_all_benchmarks(write_markdown: bool = True) -> dict[str, Any]:
             "rust_kernel_loaded": is_rust_kernel_loaded(),
             "rust_kernel_version": rust_kernel_version(),
         },
-        "suites": {"B1": b1, "B2": b2, "B3": b3, "B4": b4, "B5": b5},
+        "suites": {"B1": b1, "B2": b2, "B3": b3, "B4": b4, "B5": b5, "B6": b6},
         "traps": traps,
     }
 
@@ -51,6 +53,7 @@ def _render_markdown(data: dict[str, Any]) -> str:
     b3 = data["suites"]["B3"]
     b4 = data["suites"]["B4"]
     b5 = data["suites"]["B5"]
+    b6 = data["suites"]["B6"]
     traps = data["traps"]
 
     lines = [
@@ -59,7 +62,7 @@ def _render_markdown(data: dict[str, Any]) -> str:
         f"- **Runtime Environment:** `{env['platform']}` | Python `{env['python']}` | Native Rust Kernel (`libloresim_core`): `{env['rust_kernel_loaded']}` (v`{env['rust_kernel_version']}`)",
         "- **Reproduce Command:** `make bench` (`PYTHONPATH=src:. python -m benchmarks.runner`)",
         "",
-        "## 1. Systems, Epistemic & Simulation Benchmarks (`B1`–`B5`)",
+        "## 1. Systems, Epistemic, Simulation & Studio UI Benchmarks (`B1`–`B6`)",
         "",
         "| Suite | Metric | Without LoreSim (Baseline) | With LoreSim (`Rust + Python Kernel`) | Improvement |",
         "| :--- | :--- | :--- | :--- | :--- |",
@@ -69,6 +72,7 @@ def _render_markdown(data: dict[str, Any]) -> str:
         f"| **B3** | 16-Agent Rumor/Lie Contagion & Firsthand Lie Exposure | `{b3['without_loresim_contagion_accuracy_pct']}%` / `{b3['without_loresim_lie_exposure_recall_pct']}%` | **`{b3['with_loresim_contagion_accuracy_pct']}%` / `{b3['with_loresim_lie_exposure_recall_pct']}%`** | **`100%` exact contagion & lie detection** |",
         f"| **B4** | 100-Tick Living World + 60 FPS 2D Stage Latency | `{b4['without_loresim_ms_per_tick']} ms/tick` (`Smallville`-style) | **`{b4['with_loresim_ms_per_tick']} ms/tick`** (`$0.00` visual cost) | **`{b4['tick_speedup_x']}x` faster / `-{b4['token_reduction_pct']}%` tokens** |",
         f"| **B5** | Butterfly-Effect Blast-Radius Recall & 30-Branch Forking | `0.0%` automated (`Manual re-read`) | **`{b5['blast_radius_recall_pct']}%`** in **`{b5['blast_radius_latency_ms']} ms`** (`{b5['avg_branch_fork_latency_ms']} ms` fork) | **`0.0%` cross-branch contamination** |",
+        f"| **B6** | Live 60 FPS Studio UI Run (`5` Ticks, `25` Mind X-Rays, Interrogate + Butterfly) | `~12,000 ms/frame` (`~$0.40/scene` gen-video) | **`{b6['with_loresim_frame_ms']} ms/frame`** (`$0.00` Canvas + WebSpeech) | **`{b6['sixty_fps_budget_headroom_x']}x` faster than 60 FPS budget** |",
         "",
         "## 2. Narrative Trap Gauntlets (`S1`–`S4`)",
         "",

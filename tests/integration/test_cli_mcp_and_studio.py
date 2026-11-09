@@ -66,3 +66,21 @@ def test_studio_api_router_and_cli(tmp_path: Path) -> None:
         assert len(frame_data["puppets"]) == 5
     finally:
         eng.close()
+
+
+def test_live_studio_ui_interactive_theater_run() -> None:
+    """Spin up the live HTTP Studio server and verify all UI Canvas, Mind X-Ray, Interrogation, and Butterfly flows."""
+    from benchmarks.suites.b6_studio_ui_theater import run_b6_studio_ui_theater
+
+    b6 = run_b6_studio_ui_theater()
+    assert b6["ui_controls_verified"] is True
+    assert b6["timeline_ticks_enacted"] == 5
+    assert b6["puppets_rendered"] == 25
+    assert b6["earshot_rings_rendered"] >= 4
+    assert b6["item_arcs_rendered"] >= 1
+    assert set(b6["contagion_states_rendered"]) >= {"GOLD_DECEIVER", "RED_LIE", "GREY_UNAWARE"}
+    assert b6["mind_xray_inspector_calls"] == 25
+    assert b6["interrogation_cracked"] is True
+    assert b6["butterfly_broken_events_rendered"] >= 3
+    assert b6["linter_endpoint_ok"] is True
+    assert b6["with_loresim_frame_ms"] < 16.67
