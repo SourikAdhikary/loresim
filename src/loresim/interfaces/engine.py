@@ -20,6 +20,7 @@ from loresim.core.errors import (
     InventoryViolationError,
     TeleportationViolationError,
 )
+from loresim.core.llm import LLMProvider
 from loresim.core.types import ContinuityViolation, StageFrame, WorldEvent
 from loresim.epistemic.firewall import EpistemicPromptFirewall
 from loresim.epistemic.irony import DramaticIronyAnalyzer
@@ -42,6 +43,7 @@ class LoreSimEngine:
         workspace_root: Path | str,
         world_name: str = "DefaultWorld",
         strict_mode: bool = False,
+        llm_provider: LLMProvider | None = None,
     ) -> None:
         self.config = LoreSimConfig(
             workspace_root=Path(workspace_root),
@@ -69,7 +71,12 @@ class LoreSimEngine:
             self.threads,
         )
         self.butterfly = ButterflyAnalyzer(self.db)
-        self.ingester = ManuscriptIngester()
+        self.ingester = ManuscriptIngester(
+            spatial=self.spatial,
+            agents=self.agents,
+            inventory=self.inventory,
+            llm_provider=llm_provider,
+        )
         self.stage_director = StageDirector(
             self.db,
             self.spatial,
@@ -85,6 +92,7 @@ class LoreSimEngine:
             self.firewall,
             self.irony,
             composure_crack_threshold=self.config.composure_crack_threshold,
+            llm_provider=llm_provider,
         )
         self.doctor = LoreSimDoctor(
             self.db,
@@ -317,6 +325,45 @@ class LoreSimEngine:
         return self.stage_director.compile_stage_frame(
             branch_ref=branch_ref, tick=tick, focus_fact_id=focus_fact_id
         )
+
+    def ingest_manuscript(
+        self,
+        script_text: str,
+        *,
+        branch_ref: str = "main",
+        use_llm: bool = False,
+        strict_override: bool | None = None,
+    ) -> dict[str, Any]:
+        """Parse and record events from `@tick` DSL, Fountain screenplay, or natural-language prose."""
+        parsed_events = self.ingester.parse_script_lines(script_text, use_llm=use_llm)
+        recorded: list[WorldEvent] = []
+        all_violations: list[ContinuityViolation] = []
+        for ev_dict in parsed_events:
+            ev, vios = self.record_event(
+                tick=int(ev_dict["tick"]),
+                story_time_minutes=int(ev_dict.get("story_time_minutes", int(ev_dict["tick"]) * 30)),
+                chapter_ref=str(ev_dict.get("chapter_ref", "Ch1")),
+                location_id=str(ev_dict["location_id"]),
+                actor_id=str(ev_dict["actor_id"]),
+                event_type=str(ev_dict["event_type"]),
+                target_ids=list(ev_dict.get("target_ids", [])),
+                visibility=str(ev_dict.get("visibility", "PUBLIC_HERE")),
+                item_id=ev_dict.get("item_id"),
+                claims=list(ev_dict.get("claims", [])),
+                summary=str(ev_dict.get("summary", "")),
+                raw_text=str(ev_dict.get("raw_text", "")),
+                is_secret=any(bool(c.get("is_secret")) for c in ev_dict.get("claims", [])),
+                branch_ref=branch_ref,
+                strict_override=strict_override,
+            )
+            recorded.append(ev)
+            all_violations.extend(vios)
+        return {
+            "events_count": len(recorded),
+            "events": [asdict(e) for e in recorded],
+            "violations_count": len(all_violations),
+            "violations": [asdict(v) for v in all_violations],
+        }
 
     def seed_demo_mystery_world(self) -> dict[str, Any]:
         """Seed a rich 4-room, 5-character Royal Treaty Conspiracy world for the 60 FPS Studio."""

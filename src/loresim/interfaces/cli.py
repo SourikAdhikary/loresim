@@ -49,6 +49,11 @@ def main(argv: list[str] | None = None) -> int:
     int_p = sub.add_parser("interrogate", help="Cross-examine a suspect NPC with all known objective evidence")
     int_p.add_argument("suspect_id")
 
+    ing_p = sub.add_parser("ingest", help="Ingest a Markdown prose chapter, Fountain screenplay, or @tick script file")
+    ing_p.add_argument("file_path")
+    ing_p.add_argument("--branch", default="main")
+    ing_p.add_argument("--use-llm", action="store_true", help="Use configured LLMProvider for prose extraction")
+
     studio_p = sub.add_parser("studio", help="Launch the 60 FPS 2D NPC Theater & Contagion Map Web Studio")
     studio_p.add_argument("--host", default="127.0.0.1")
     studio_p.add_argument("--port", type=int, default=8420)
@@ -120,6 +125,12 @@ def main(argv: list[str] | None = None) -> int:
             facts = engine.vault.list_visible_facts()
             truth_ids = [f.fact_id for f in facts if f.objective_truth]
             res = engine.simulator.interrogate_suspect(args.suspect_id, truth_ids)
+            print(json.dumps(res, indent=2))
+            return 0
+
+        if args.cmd == "ingest":
+            text = Path(args.file_path).read_text(encoding="utf-8")
+            res = engine.ingest_manuscript(text, branch_ref=args.branch, use_llm=bool(args.use_llm))
             print(json.dumps(res, indent=2))
             return 0
 

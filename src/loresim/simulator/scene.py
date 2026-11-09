@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from loresim.core.llm import LLMProvider, resolve_llm_provider_from_env
 from loresim.core.rust_bridge import rust_compute_composure_after_evidence
 from loresim.epistemic.firewall import EpistemicPromptFirewall
 from loresim.epistemic.irony import DramaticIronyAnalyzer
@@ -23,6 +24,8 @@ class SceneSimulator:
         firewall: EpistemicPromptFirewall,
         irony: DramaticIronyAnalyzer,
         composure_crack_threshold: float = 25.0,
+        llm_provider: LLMProvider | None = None,
+        max_firewall_retries: int = 2,
     ) -> None:
         self.db = db
         self.agents = agents
@@ -30,6 +33,12 @@ class SceneSimulator:
         self.firewall = firewall
         self.irony = irony
         self.composure_crack_threshold = composure_crack_threshold
+        self.llm_provider: LLMProvider | None = llm_provider or resolve_llm_provider_from_env()
+        self.max_firewall_retries = max(0, int(max_firewall_retries))
+
+    def set_llm_provider(self, provider: LLMProvider | None) -> None:
+        """Attach or replace the active LLMProvider at runtime."""
+        self.llm_provider = provider
 
     def generate_sandboxed_response(
         self,
@@ -37,11 +46,14 @@ class SceneSimulator:
         topic_query: str,
         branch_ref: str = "main",
         query_tick: int | None = None,
+        llm_provider: LLMProvider | None = None,
     ) -> dict[str, Any]:
         """Generate an epistemically isolated response for `agent_id` at `(branch_ref, query_tick)`.
 
         Uses the compiled `EpistemicPromptFirewall` context so the character can ONLY speak from
         what they believe to be true (or their cover story if hiding a secret) at `query_tick`.
+        When an `LLMProvider` is configured, executes a self-healing firewall retry loop that
+        intercepts and regenerates any response that leaks unknown facts.
         """
         ctx = self.firewall.compile_agent_context(
             agent_id, branch_ref=branch_ref, query_tick=query_tick
@@ -82,20 +94,71 @@ class SceneSimulator:
         speaker_name = profile.name if profile else agent_id
 
         if matching_cover_lies:
-            utterance = f"{speaker_name}: I already told you—{matching_cover_lies[0]}."
+            fallback_utterance = f"{speaker_name}: I already told you—{matching_cover_lies[0]}."
             mode = "MAINTAINING_COVER_LIE"
         elif withheld_secrets and not matching_truths:
-            utterance = f"{speaker_name}: I was nowhere near that and know nothing about what happened."
+            fallback_utterance = (
+                f"{speaker_name}: I was nowhere near that and know nothing about what happened."
+            )
             mode = "WITHHOLDING_SECRET"
         elif matching_lies_believed:
-            utterance = f"{speaker_name}: From what I was told, {matching_lies_believed[0]}."
+            fallback_utterance = f"{speaker_name}: From what I was told, {matching_lies_believed[0]}."
             mode = "REPEATING_BELIEVED_FALSEHOOD"
         elif matching_truths:
-            utterance = f"{speaker_name}: I know for a fact that {matching_truths[0]}."
+            fallback_utterance = f"{speaker_name}: I know for a fact that {matching_truths[0]}."
             mode = "STATING_KNOWN_TRUTH"
         else:
-            utterance = f"{speaker_name}: I have no knowledge of '{topic_query}' at this time."
+            fallback_utterance = f"{speaker_name}: I have no knowledge of '{topic_query}' at this time."
             mode = "UNAWARE_HONEST"
+
+        provider = llm_provider or self.llm_provider
+        utterance = fallback_utterance
+        firewall_retries = 0
+        firewall_redacted = False
+
+        if provider is not None:
+            system_prompt = (
+                f"{ctx['prompt_text']}\n\n"
+                "STRICT EPISTEMIC DIRECTIVE:\n"
+                "- Speak in first person as your character.\n"
+                "- You may ONLY reference facts listed in 'Facts You Believe to Be True' or your cover story.\n"
+                "- NEVER reveal any item in 'Secrets You Know' and NEVER guess or invent facts you have not witnessed."
+            )
+            running_user_prompt = f"Topic / Question: {topic_query}\nRespond in 1-2 concise sentences as {speaker_name}."
+            accepted_llm_utt: str | None = None
+
+            for attempt in range(self.max_firewall_retries + 1):
+                candidate = provider.complete(system_prompt, running_user_prompt)
+                if not candidate:
+                    break
+                candidate_leaks = self.firewall.audit_utterance_for_leaks(
+                    agent_id=agent_id,
+                    utterance=candidate,
+                    branch_ref=branch_ref,
+                    query_tick=query_tick,
+                    raise_on_leak=False,
+                )
+                if not candidate_leaks:
+                    accepted_llm_utt = (
+                        candidate
+                        if candidate.startswith(f"{speaker_name}:")
+                        else f"{speaker_name}: {candidate}"
+                    )
+                    break
+                firewall_retries = attempt + 1
+                leaked_props = [lk["proposition"] for lk in candidate_leaks]
+                running_user_prompt = (
+                    f"Topic / Question: {topic_query}\n"
+                    f"[EPISTEMIC FIREWALL REJECTION #{firewall_retries}]: Your previous draft leaked "
+                    f"unlearned fact(s) {leaked_props} which {speaker_name} does NOT know at tick {query_tick}. "
+                    "Rewrite your line strictly using ONLY your known beliefs without mentioning those facts."
+                )
+
+            if accepted_llm_utt is not None:
+                utterance = accepted_llm_utt
+            elif firewall_retries > 0:
+                firewall_redacted = True
+                utterance = fallback_utterance
 
         # Verify 0% omniscient leak via the firewall
         leaks = self.firewall.audit_utterance_for_leaks(
@@ -112,6 +175,9 @@ class SceneSimulator:
             "utterance": utterance,
             "epistemic_mode": mode,
             "leaks_detected": len(leaks),
+            "firewall_retries": firewall_retries,
+            "firewall_redacted": firewall_redacted,
+            "llm_provider": provider.provider_name if provider is not None else "deterministic",
             "token_estimate": ctx["token_estimate"],
             "compiled_context": ctx,
         }
@@ -131,7 +197,9 @@ class SceneSimulator:
             suspect_id, branch_ref=branch_ref, query_tick=query_tick
         )
         secrets = [
-            b for b in beliefs.values() if (b.is_secret or b.stance == "WITHHOLDS_SECRET") and b.objective_truth
+            b
+            for b in beliefs.values()
+            if (b.is_secret or b.stance == "WITHHOLDS_SECRET") and b.objective_truth
         ]
         cover_lies = [
             b for b in beliefs.values() if not b.objective_truth and b.source_agent_id == suspect_id
@@ -205,6 +273,7 @@ class SceneSimulator:
         turns: int = 4,
         branch_ref: str = "main",
         query_tick: int | None = None,
+        llm_provider: LLMProvider | None = None,
     ) -> dict[str, Any]:
         """Run a multi-turn epistemically sandboxed conversation among `participant_ids`."""
         transcript: list[dict[str, Any]] = []
@@ -216,6 +285,7 @@ class SceneSimulator:
                 topic_query=topic_query,
                 branch_ref=branch_ref,
                 query_tick=query_tick,
+                llm_provider=llm_provider,
             )
             transcript.append(res)
             total_tokens += int(res["token_estimate"])
