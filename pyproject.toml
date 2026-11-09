@@ -11,14 +11,15 @@ requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Sourik Adhikary" }]
 keywords = [
-    "epistemic-logic",
     "world-simulation",
-    "npc-engine",
-    "narrative-continuity",
+    "npc",
+    "game-ai",
+    "storytelling",
+    "worldbuilding",
+    "interactive-fiction",
     "plot-hole-detector",
     "multi-agent",
-    "story-compiler",
-    "game-ai",
+    "rpg",
     "sqlite",
     "rust",
 ]
