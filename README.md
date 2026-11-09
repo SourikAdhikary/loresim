@@ -1,6 +1,6 @@
 # 🎭 LoreSim — Living Worlds & NPCs That Only Know What They’ve Seen or Heard
 
-**Simulate stories, games, and RPG worlds where characters have their own private memories, secrets, and lies—catch plot holes automatically and watch NPCs act out scenes live on a 2D stage.**
+**Simulate stories, games, and RPG worlds where characters have their own private memories, secrets, and lies; catch plot holes automatically and watch NPCs act out scenes live on a 2D stage.**
 
 ---
 
